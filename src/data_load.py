@@ -72,7 +72,8 @@ def load_data():
             con=engine,
             if_exists="append", 
             index=False,
-            chunksize=2000, 
+            chunksize=2000,
+            method="multi"
         )
         
         end_time = time.time()
