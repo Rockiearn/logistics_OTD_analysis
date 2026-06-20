@@ -1,37 +1,14 @@
 import os
 import time
 import pandas as pd
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
 from sqlalchemy.exc import OperationalError
+from db_engine import get_engine
 
-# ================== CONFIG ==================
+
 CSV_PATH = "data/raw/SupplyChainDT.csv"
 
-DB_USER = os.environ.get("MYSQL_ROOT_USER", "root")
-DB_PASS = os.environ.get("MYSQL_ROOT_PASSWORD", "root123")
-DB_HOST = "mysql"  
-DB_PORT = "3306"
-DB_NAME = os.environ.get("MYSQL_DATABASE", "logistics_otd")
 
-# Tạo connection URL
-connection_url = URL.create(
-    drivername="mysql+pymysql",
-    username=DB_USER,
-    password=DB_PASS,
-    host=DB_HOST,
-    port=DB_PORT,
-    database=DB_NAME
-)
-
-# Tối ưu Engine: Tăng kích thước bộ đệm kết nối (pool_size) để tải dữ liệu lớn nhanh hơn
-engine = create_engine(
-    connection_url, 
-    pool_size=10, 
-    max_overflow=20, 
-    pool_pre_ping=True, 
-    pool_timeout=60
-)
+engine = get_engine()
 
 def load_data():
     if not os.path.exists(CSV_PATH):
@@ -72,8 +49,7 @@ def load_data():
             con=engine,
             if_exists="append", 
             index=False,
-            chunksize=2000,
-            method="multi"
+            chunksize=2000
         )
         
         end_time = time.time()
@@ -88,3 +64,4 @@ def load_data():
 
 if __name__ == "__main__":
     load_data()
+
