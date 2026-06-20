@@ -61,7 +61,7 @@ def data_processing(verbose=True):
                     print(f"✅ Converted {col:25} → {dtype}")
             except Exception as e:
                 if verbose:
-                    print(f"❌ Lỗi convert {col} → {dtype}: {e}")
+                    print(f"❌ Converted Failed {col} → {dtype}: {e}")
 
     # result
     if verbose:
