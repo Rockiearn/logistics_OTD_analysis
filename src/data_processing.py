@@ -71,8 +71,19 @@ def data_processing(verbose=True):
 
         print(f"\nMemory usage: {df_processed.memory_usage(deep=True).sum() / 1024**2:.2f} MB")
 
+    #enrich_datatime
+
+    df_processed = df.assign(
+        Month_order = df_processed.order_date.dt.month,
+        Year_order = df_processed.order_date.dt.year,
+        Quarter_order = df_processed.order_date.dt.quarter,
+        Week_day_order = df_processed.order_date.dt.day_name(),
+        Month_name_order = df_processed.order_date.dt.month_name(),
+        Day_of_week_order = df_processed.order_date.dt.day_of_week
+    )
     return df_processed
 
+    
 def get_data():
     return data_processing(verbose=False)
 
