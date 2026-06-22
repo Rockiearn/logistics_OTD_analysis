@@ -10,8 +10,8 @@ df["Delay_Days"] = np.where((val:=(df.actual_lead_time - df.scheduled_lead_time)
 
 #Overall KPI
 def get_KPI():
-    Overall_OTD = (df[df.Late_delivery_risk == 0].count() / df.count()).iloc[0]
-    Late_Rate_Perc = (df[df.Late_delivery_risk == 1].count() / df.count()).iloc[0]
+    Late_Rate_Perc = df.Late_delivery_risk.mean()
+    Overall_OTD = 1 - Late_Rate_Perc
     AVG_Ac_lead_time = df.actual_lead_time.mean()
     AVG_Sc_lead_time = df.scheduled_lead_time.mean()
     AVG_delay = df.Delay_Days.mean()
@@ -35,8 +35,6 @@ def get_KPI():
 
     KPI = pd.DataFrame(kpi_dict)
 
-    print(f"          =======KPI_DashBoard=======\n{KPI}")
-
     return KPI
 
 #Late_Perc_Group
@@ -56,10 +54,37 @@ def Late_Perc_Group():
 
 #Late_Period
 def Late_Perc_Period():
-    Late_Perc_Year = df.groupby("Year_order")["Late_delivery_risk"].mean().reset_index(name="Perc_Delay")
-    Late_Perc_Month = df.groupby(["Month_order", "Month_name_order"])["Late_delivery_risk"].mean().reset_index(name="Perc_Delay")
+    trend_df = df.groupby(["year_month", "Shipping Mode"])["Late_delivery_risk"].mean().reset_index()
     Late_Perc_Qrt = df.groupby("Quarter_order")["Late_delivery_risk"].mean().reset_index(name="Perc_Delay")
     Late_Perc_WD = df.groupby(["Week_day_order", "Day_of_week_order"])["Late_delivery_risk"].mean().reset_index(name="Perc_Delay").sort_values("Day_of_week_order", ascending=True)
 
-    return Late_Perc_Year, Late_Perc_Month, Late_Perc_Qrt, Late_Perc_WD
+    return trend_df, Late_Perc_Qrt, Late_Perc_WD
 
+if __name__ == "__main__":
+    trend_df, df_qrt, df_wd = Late_Perc_Period()
+    shipping_mode, category, market, cus_segment = Late_Perc_Group()
+    kpi = get_KPI()
+#KPI
+    print("--- OVERALL KPI ---")
+    print(kpi)
+#Category
+    print("--- Shipping Mode OTD ---")
+    print(shipping_mode)
+
+    print("--- Top 10 Category OTD ---")
+    print(category.head(10))
+
+    print("--- Region OTD ---")
+    print(market)
+
+    print("--- Customer Segment OTD ---")
+    print(cus_segment)
+#Timeline
+    print("--- Trend ---")
+    print(trend_df)
+
+    print("\n--- Perc Late per Qrt ---")
+    print(df_qrt)
+
+    print("\n--- Perc Late per Dayofweek ---")
+    print(df_wd)
