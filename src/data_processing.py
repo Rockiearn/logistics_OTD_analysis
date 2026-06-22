@@ -73,13 +73,14 @@ def data_processing(verbose=True):
 
     #enrich_datatime
 
-    df_processed = df.assign(
+    df_processed = df_processed.assign(
         Month_order = df_processed.order_date.dt.month,
         Year_order = df_processed.order_date.dt.year,
         Quarter_order = df_processed.order_date.dt.quarter,
         Week_day_order = df_processed.order_date.dt.day_name(),
         Month_name_order = df_processed.order_date.dt.month_name(),
-        Day_of_week_order = df_processed.order_date.dt.day_of_week
+        Day_of_week_order = df_processed.order_date.dt.day_of_week,
+        year_month = df_processed.order_date.dt.to_period("M")
     )
     return df_processed
 
