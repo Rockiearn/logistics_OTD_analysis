@@ -46,7 +46,7 @@ def Late_Perc_Group():
                             on="Shipping Mode"
     ).drop_duplicates().reset_index(drop=True)
     Category = df.groupby("Category Name")["Late_delivery_risk"].mean().reset_index(name="Perc_Delay").sort_values("Perc_Delay", ascending=False)
-    Market = df.groupby(["Market", "Order Region"])["Late_delivery_risk"].mean().reset_index(name="Perc_Delay").sort_values(["Market", "Order Region", "Perc_Delay"], ascending=[True, True, False])
+    Market = df.groupby(["Market", "Order Region"])["Late_delivery_risk"].mean().reset_index(name="Perc_Delay").sort_values(["Market", "Perc_Delay", "Order Region"], ascending=[True, False, True])
     Cus_Segment = df.groupby(["Customer Segment", "Shipping Mode"])["Late_delivery_risk"].mean().reset_index(name="Perc_Delay").sort_values(["Shipping Mode", "Perc_Delay"], ascending=[True, False])
 
 
