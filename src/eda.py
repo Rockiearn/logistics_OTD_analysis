@@ -36,6 +36,17 @@ def get_KPI():
     KPI = pd.DataFrame(kpi_dict)
 
     return KPI
+#Total orders of each Shipping mode:
+def Order_Info():
+    T_orders = df.groupby("Shipping Mode").agg(
+        Order_quantity_by_mode = ("order_date", "count"),
+        Total_sales_by_mode = ("Sales", "sum") 
+    ).reset_index()
+
+    T_orders = T_orders.assign(Perc_used = T_orders.Order_quantity_by_mode/df.order_date.count(), Sales_Perc = T_orders.Total_sales_by_mode/df.Sales.sum())
+    T_orders["Perc_used"] = T_orders.Perc_used.round(2)
+    T_orders["Sales_Perc"] = T_orders.Sales_Perc.round(4)
+    return T_orders
 
 #Late_Perc_Group
 def Late_Perc_Group():
@@ -64,9 +75,16 @@ if __name__ == "__main__":
     trend_df, df_qrt, df_wd = Late_Perc_Period()
     shipping_mode, category, market, cus_segment = Late_Perc_Group()
     kpi = get_KPI()
+    order_info = Order_Info()
+
+#Order
+    print("--- Order Insight ---")
+    print(order_info)
+
 #KPI
     print("--- OVERALL KPI ---")
     print(kpi)
+
 #Category
     print("--- Shipping Mode OTD ---")
     print(shipping_mode)
@@ -79,6 +97,7 @@ if __name__ == "__main__":
 
     print("--- Customer Segment OTD ---")
     print(cus_segment)
+
 #Timeline
     print("--- Trend ---")
     print(trend_df)

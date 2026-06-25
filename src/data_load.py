@@ -4,44 +4,42 @@ import pandas as pd
 from sqlalchemy.exc import OperationalError
 from db_engine import get_engine
 
-
 CSV_PATH = "data/raw/SupplyChainDT.csv"
-
 
 engine = get_engine()
 
 def load_data():
     if not os.path.exists(CSV_PATH):
-        print(f"❌ Không tìm thấy file CSV tại: {CSV_PATH}")
-        print("Vui lòng đặt file CSV vào thư mục data/raw/ và kiểm tra tên file!")
+        print(f"❌ CSV file not found at: {CSV_PATH}")
+        print("Please place the CSV file in the 'data/raw/' directory and verify the file name!")
         return
     
     try:
-        print("📂 Đang đọc file CSV...")
-        # Đọc dữ liệu
+        print("📂 Reading CSV file...")
+        # Load data
         df = pd.read_csv(CSV_PATH, encoding='latin1')
-        print(f"✅ Đọc thành công! Shape: {df.shape}")
-        print(f"   Số cột: {len(df.columns)}")
+        print(f"✅ Successfully read! Shape: {df.shape}")
+        print(f"   Number of columns: {len(df.columns)}")
         
-        # Kiểm tra và chờ kết nối MySQL sẵn sàng
-        print("📤 Đang kiểm tra kết nối tới MySQL...")
+        # Check and wait for MySQL connection to be ready
+        print("📤 Checking connection to MySQL...")
         retries = 6
         while retries > 0:
             try:
                 with engine.connect() as connection:
-                    print("⚙️ Mạng nội bộ kết nối thành công! MySQL đã sẵn sàng.")
+                    print("⚙️ Internal network connection successful! MySQL is ready.")
                     break
             except OperationalError:
                 retries -= 1
-                print(f"⏳ MySQL đang bận hoặc khởi động, đợi thêm 5 giây... (Còn {retries} lần thử)")
+                print(f"⏳ MySQL is busy or starting up, waiting 5 seconds... ({retries} retries remaining)")
                 time.sleep(5)
                 
         if retries == 0:
-            print("❌ Thất bại: Không thể kết nối đến Database.")
+            print("❌ Failure: Unable to connect to the database.")
             return
 
-        # Đẩy dữ liệu vào MySQL
-        print("📤 Đang tiến hành nạp dữ liệu vào MySQL...")
+        # Ingest data into MySQL
+        print("📤 Loading data into MySQL...")
         start_time = time.time()
         
         df.to_sql(
@@ -55,13 +53,12 @@ def load_data():
         end_time = time.time()
         execution_time = (end_time - start_time) / 60
         
-        print("🎉 Tải toàn bộ dữ liệu thành công!")
-        print(f"   Tổng số dòng đã nạp: {len(df):,}")
-        print(f"   Thời gian thực thi: {execution_time:.2f} phút")
+        print("🎉 All data loaded successfully!")
+        print(f"   Total rows loaded: {len(df):,}")
+        print(f"   Execution time: {execution_time:.2f} minutes")
         
     except Exception as e:
-        print(f"❌ Lỗi phát sinh khi load dữ liệu: {e}")
+        print(f"❌ Error occurred while loading data: {e}")
 
 if __name__ == "__main__":
     load_data()
-
