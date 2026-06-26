@@ -170,3 +170,5 @@ if __name__ == "__main__":
     print("--- 5. REGIONAL LOGISTICS PROFILE ---")
     print("---------------")
     print(region_pivot)
+
+    
