@@ -18,8 +18,10 @@ services:
       - mysql
     volumes:
       - .:/app
+    ports:
+      - "8501:8501"   # Streamlit
+      - "8888:8888"   # Jupyter
     stdin_open: true
     tty: true
-
 volumes:
   mysql_data:
