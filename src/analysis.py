@@ -67,6 +67,7 @@ def get_shipping_analysis():
             min_actual=("actual_lead_time", "min"),
             median_actual=("actual_lead_time", "median"),
             avg_actual=("actual_lead_time", "mean"),
+            frequent_actual=("actual_lead_time", lambda x: x.mode().iloc[0] if not x.mode().empty else None)
         )
         .reset_index()
     )

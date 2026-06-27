@@ -60,5 +60,9 @@ def load_data():
     except Exception as e:
         print(f"❌ Error occurred while loading data: {e}")
 
+
+
+
+
 if __name__ == "__main__":
     load_data()
