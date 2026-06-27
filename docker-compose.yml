@@ -23,5 +23,8 @@ services:
       - "8888:8888"   # Jupyter
     stdin_open: true
     tty: true
+    environment:
+      - PYTHONPATH=/app:/app/src     
+    working_dir: /app               
 volumes:
   mysql_data:
