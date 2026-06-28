@@ -3,9 +3,10 @@ import pandas as pd
 import seaborn as sns
 import os
 import functools
+import numpy as np
 
 from eda import Late_Perc_Group, Order_Info, Late_Perc_Period
-
+from analysis import get_shipping_analysis, get_cancellation_analysis, get_category_analysis, get_region_analysis
 
 def save_chart_automatically(func):
     @functools.wraps(func)
@@ -25,7 +26,7 @@ def save_chart_automatically(func):
     return wrapper
 
 
-
+#EDA
 @save_chart_automatically
 def shipping_performance_chart():
     # 1. Initialize data fromthe EDA module
@@ -419,6 +420,181 @@ def shipping_mode_trend():
     ax.spines["bottom"].set_color("#cccccc")
     ax.set_ylim(0, 1.05)
 
+#Analysis
+@save_chart_automatically
+def SLA_gap():
+    df = get_shipping_analysis()
+
+    df_sla = df.reindex(columns=["Shipping Mode", "frequent_actual", "scheduled_lead_time"]).rename(columns={"frequent_actual": "Common_lead_time", "scheduled_lead_time": "Scheduled Time"})
+
+
+    x = np.arange(len(df_sla["Shipping Mode"]))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=100)
+    fig.patch.set_facecolor("#ffffff")
+    ax.set_facecolor("#ffffff")
+
+    # Plot the pair of scheduled vs. actual delivery bars
+    rects1 = ax.bar(x - width/2, df_sla["Scheduled Time"], width, label="Scheduled Lead Time", color="#BACAD6")
+    rects2 = ax.bar(x + width/2, df_sla["Common_lead_time"], width, label="Common_lead_time", color="#1B365D")
+
+    # Highlight the First Class section with a dashed bounding box
+    rect = plt.Rectangle((-0.4, -0.1), 0.8, 2.4, fill=False, edgecolor="#D94E4E", linestyle="--", linewidth=1.5)
+    ax.add_patch(rect)
+    ax.text(0, 2.45, "SLA BREACHED: TIME DOUBLED!", ha="center", va="bottom", color="#D94E4E", fontsize=9, fontweight="bold")
+
+    # Format axes and text styling
+    ax.set_title("OPERATIONAL SLA GAP: SCHEDULED VS ACTUAL DELIVERY DAYS WITHIN CANCELED ORDERS", fontsize=11.5, fontweight="bold", color="#1B365D", pad=50)
+    ax.set_xticks(x)
+    ax.set_xticklabels(df_sla["Shipping Mode"], fontsize=10, fontweight="bold", color="#333333")
+    ax.set_ylabel("Days", fontsize=10, fontweight="bold")
+    ax.legend(frameon=False, loc="upper left")
+
+    # Clean up border spines to optimize whitespace
+    for spine in ["top", "right", "left"]: ax.spines[spine].set_visible(False)
+    ax.spines["bottom"].set_color("#cccccc")
+
+    # Add data labels on top of each bar
+    ax.bar_label(rects1, padding=3, fmt="%.1f", fontsize=9)
+    ax.bar_label(rects2, padding=3, fmt="%.1f", fontsize=9, fontweight="bold")
+@save_chart_automatically
+def delay_rate_canceled_orders():
+    total_cont, is_late_df = get_cancellation_analysis()
+
+    is_late_df = is_late_df.loc[is_late_df.is_late != 0, :]
+
+    df = (pd.merge(is_late_df, total_cont, how="inner", on="Shipping Mode")).assign(Delay_Rate_In_Cancelled = lambda x: x["count"]/x["Total_contribution"]).reindex(columns=["Shipping Mode", "Delay_Rate_In_Cancelled"]).sort_values("Delay_Rate_In_Cancelled", ascending=False)
+
+    fig, ax = plt.subplots(figsize=(9, 5), dpi=100)
+    fig.patch.set_facecolor("#ffffff")
+    ax.set_facecolor("#ffffff")
+
+    # Pre-attentive color palette: Vivid red for the target focus, other elements muted to gray
+    PRE_ATTENTIVE_COLORS = ["#D94E4E", "#888888", "#A6A6A6", "#C0C0C0"]
+
+    bars = ax.barh(df["Shipping Mode"], df["Delay_Rate_In_Cancelled"], color=PRE_ATTENTIVE_COLORS, height=0.55)
+
+    # Configure chart title and clean layout
+    ax.set_title("DELAY RATE WITHIN CANCELLED ORDERS", fontsize=11.5, fontweight="bold", color="#1B365D", pad=30)
+    ax.get_xaxis().set_visible(False)
+
+    # Format Y-axis labels
+    for i, label in enumerate(ax.get_yticklabels()):
+        label.set_fontsize(10)
+        if i == 0:  # First Class
+            label.set_fontweight("bold")
+            label.set_color("#D94E4E")
+
+    # Add targeted data labels
+    for i, bar in enumerate(bars):
+        width = bar.get_width()
+        text_weight = "bold" if i == 0 else "normal"
+        text_color = "#D94E4E" if i == 0 else "#555555"
+        text_size = 11 if i == 0 else 9
+        
+        ax.text(
+            width + 0.02, bar.get_y() + bar.get_height()/2, 
+            f"{width*100:.1f}% Late", 
+            ha="left", va="center", fontsize=text_size, fontweight=text_weight, color=text_color
+        )
+
+    # Remove distracting outer border spines
+    for spine in ax.spines.values(): spine.set_visible(False)
+    ax.set_xlim(0, 1.15)
+@save_chart_automatically
+def category_dependency_FC():
+    df = get_category_analysis().reset_index()
+
+    categories = df["Category Name"].unique()
+    y_indices = np.arange(len(categories))
+    bar_height = 0.18
+
+    fig, ax = plt.subplots(figsize=(11, 7), dpi=100)
+    fig.patch.set_facecolor("#ffffff")
+    ax.set_facecolor("#ffffff")
+
+    # Tailored color palette: Bold First Class, other classes muted to dark gray
+    PALETTE_DARK_GRAY = {
+        "First Class": "#1B365D", 
+        "Second Class": "#999999",
+        "Standard Class": "#999999",  
+        "Same Day": "#999999" 
+    }
+
+    for i, mode in enumerate(["Same Day" ,"Standard Class", "Second Class", "First Class"]):
+        offsets = y_indices - (4 * bar_height)/2 + i * bar_height + bar_height/2
+        lengths = df[mode].values
+        
+        bars = ax.barh(offsets, lengths, height=bar_height, color=PALETTE_DARK_GRAY[mode], edgecolor="none", label=mode)
+        
+        # Only display Data Labels for First Class
+        if mode == "First Class":
+            for j, bar in enumerate(bars):
+                val = bar.get_width()
+                ax.text(val + 0.01, bar.get_y() + bar.get_height()/2, f"{val*100:.1f}%", 
+                        ha="left", va="center", fontsize=9, fontweight="bold", color="#1B365D")
+
+    ax.set_title("BUSINESS IMPLICATION: CATEGORY DEPENDENCY ON FIRST CLASS", fontsize=13.5, fontweight="bold", color="#1B365D", pad=30)
+    ax.set_yticks(y_indices)
+    ax.set_yticklabels(categories, fontsize=10, fontweight="bold", color="#333333")
+    ax.get_xaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: f"{int(x*100)}%"))
+
+    # Clean up border spacing
+    for spine in ["top", "right"]: ax.spines[spine].set_visible(False)
+    ax.spines["left"].set_color("#cccccc")
+    ax.spines["bottom"].set_color("#cccccc")
+    ax.set_xlim(0, 0.75)
+
+    # Add legend for corporate color scheme
+    ax.legend(loc="best", frameon=False, fontsize=9)
+@save_chart_automatically
+def region_dependency_FC():
+    df = get_region_analysis().reset_index()
+
+    Region = df["Order Region"].unique()
+    y_indices = np.arange(len(Region))
+    bar_height = 0.18
+
+    fig, ax = plt.subplots(figsize=(11, 7), dpi=100)
+    fig.patch.set_facecolor("#ffffff")
+    ax.set_facecolor("#ffffff")
+
+    # Tailored color palette: Bold First Class, other classes muted to dark gray
+    PALETTE_DARK_GRAY = {
+        "First Class": "#1B365D", 
+        "Second Class": "#999999",
+        "Standard Class": "#999999",  
+        "Same Day": "#999999" 
+    }
+
+    for i, mode in enumerate(["Same Day" ,"Standard Class", "Second Class", "First Class"]):
+        offsets = y_indices - (4 * bar_height)/2 + i * bar_height + bar_height/2
+        lengths = df[mode].values
+        
+        bars = ax.barh(offsets, lengths, height=bar_height, color=PALETTE_DARK_GRAY[mode], edgecolor="none", label=mode)
+        
+        # Only display Data Labels for First Class
+        if mode == "First Class":
+            for j, bar in enumerate(bars):
+                val = bar.get_width()
+                ax.text(val + 0.01, bar.get_y() + bar.get_height()/2, f"{val*100:.1f}%", 
+                        ha="left", va="center", fontsize=9, fontweight="bold", color="#1B365D")
+
+    ax.set_title("BUSINESS IMPLICATION: CATEGORY DEPENDENCY ON FIRST CLASS", fontsize=13.5, fontweight="bold", color="#1B365D", pad=30)
+    ax.set_yticks(y_indices)
+    ax.set_yticklabels(Region, fontsize=10, fontweight="bold", color="#333333")
+    ax.get_xaxis().set_major_formatter(plt.FuncFormatter(lambda x, loc: f"{int(x*100)}%"))
+
+    # Clean up border spacing
+    for spine in ["top", "right"]: ax.spines[spine].set_visible(False)
+    ax.spines["left"].set_color("#cccccc")
+    ax.spines["bottom"].set_color("#cccccc")
+    ax.set_xlim(0, 0.75)
+
+    # Add legend for corporate color scheme
+    ax.legend(loc="lower right", frameon=False, fontsize=9)
+
 #======================================================
 if __name__ == "__main__":
     shipping_performance_chart()
@@ -426,3 +602,7 @@ if __name__ == "__main__":
     overall_KPI_dashboard()
     category_OTD_rank()
     shipping_mode_trend()
+    SLA_gap()
+    delay_rate_canceled_orders()
+    category_dependency_FC()
+    region_dependency_FC()
