@@ -4,9 +4,9 @@ import numpy as np
 import os
 from dotenv import load_dotenv, find_dotenv  
 
-from eda import get_KPI, Order_Info
-from analysis import get_dashboard_kpi, get_cancellation_analysis
-from apply_recommendations import get_KPI_Optimized
+from src.eda import get_KPI, Order_Info
+from src.analysis import get_dashboard_kpi, get_cancellation_analysis
+from src.apply_recommendations import get_KPI_Optimized
 
 load_dotenv(find_dotenv())
 # ==========================================
