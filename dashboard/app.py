@@ -48,7 +48,7 @@ with st.sidebar:
     st.markdown("---")
     st.info("💡 Tip: Navigate through the tabs above to move from Current Baseline to Root Cause Diagnosis and Optimization Simulation.")
     st.markdown("---")
-    note = os.environ.get("note", "...")
+    note = os.environ.get("note", "❤️ from Creator Duc Thuan: I'm truly grateful to your time spent to look into my personal project. Happy Learning and Have a good day!")
     st.info(note)
 
 
