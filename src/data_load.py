@@ -6,7 +6,9 @@ from db_engine import get_engine
 
 CSV_PATH = "data/raw/SupplyChainDT.csv"
 
-engine = get_engine()
+engine = None
+if os.environ.get("MYSQL_ROOT_PASSWORD") or os.environ.get("MYSQL_PASSWORD"):
+    engine = get_engine()
 
 def load_data():
     if not os.path.exists(CSV_PATH):
