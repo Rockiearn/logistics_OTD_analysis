@@ -35,17 +35,12 @@ def get_dashboard_kpi():
 def get_cancellation_analysis():
     df_cancelled = df.copy().loc[mask1, :]
 
-    Shipping = (
-        df_cancelled.groupby("Shipping Mode")
-        .agg(
+    Shipping = df_cancelled.groupby("Shipping Mode").agg(
             Total_contribution=("order_date", "size"),
-            Total_sales_lost=(
-                "Sales",
-                "sum",
-            ),
-        )
-        .reset_index()
-    )
+            Total_sales_lost=("Sales", "sum")
+            ).reset_index()
+    
+    Shipping["Loss_Proportion"] = ((Shipping["Total_sales_lost"]/Shipping["Total_sales_lost"].sum()) * 100).round(2)
 
     Cnxl_due_late = df_cancelled.groupby(["Shipping Mode", "is_late"])[
         "order_date"
