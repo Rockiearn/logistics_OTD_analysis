@@ -7,11 +7,8 @@ import numpy as np
 
 from eda import Late_Perc_Group, Order_Info, Late_Perc_Period
 from analysis import get_shipping_analysis, get_cancellation_analysis, get_category_analysis, get_region_analysis
-#=========================================
-
-
-
-
+from apply_recommendations import Late_Perc_Period_Optimized
+#======================================================
 def save_chart_automatically(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -28,7 +25,6 @@ def save_chart_automatically(func):
         print(f"🚀 The image exported: {file_path}")
 
     return wrapper
-
 
 #EDA
 @save_chart_automatically
@@ -111,7 +107,7 @@ def shipping_performance_chart():
 
     # 5. Title & Aesthetics Clean-up
     plt.title(
-        "SHIPPING PERFORMANCE ANALYSIS\nDelay Rate vs. Scheduled Lead Time (SLA)",
+        "SHIPPING PERFORMANCE ANALYSIS\nDelay Rate and Scheduled Lead Time (SLA)",
         fontsize=13,
         fontweight="bold",
         pad=22,
@@ -378,7 +374,7 @@ def shipping_mode_trend():
     # Disable grid lines
     ax.grid(False)
 
-    # Distinct color palette (Corporate Navy theme paired with warning Amber)
+    # Distinct color palette 
     PALETTE_TREND = {
         "First Class": "#D9A05B",     # Amber (Highest risk category)
         "Second Class": "#4A7BB0",    # Slate Blue
@@ -405,7 +401,7 @@ def shipping_mode_trend():
     ax.set_xlabel("Timeline (Year-Month)", fontsize=10, fontweight="bold", labelpad=12)
     ax.set_ylabel("Late Delivery Risk Rate", fontsize=10, fontweight="bold")
 
-    # Format Y-axis to display as percentages (e.g., 40%)
+    # Format Y-axis to display as percentages
     ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda y, loc: f"{int(y*100)}%"))
 
     # Thin out X-axis tick labels (display every 3 months) to prevent overlapping text
@@ -414,7 +410,7 @@ def shipping_mode_trend():
     ax.set_xticks(thinned_ticks)
     ax.set_xticklabels(thinned_ticks, rotation=35, ha="right", fontsize=9, color="#333333")
 
-    # 5. Fine-tune the legend placement (positioned neatly outside on the upper right)
+    # 5. Fine-tune the legend placement
     ax.legend(title="Shipping Mode", title_fontsize=10, fontsize=9, loc="upper left", bbox_to_anchor=(1, 1), frameon=False)
 
     # 6. Clean up chart borders (spines)
@@ -475,7 +471,7 @@ def delay_rate_canceled_orders():
     ax.set_facecolor("#ffffff")
 
     # Pre-attentive color palette: Vivid red for the target focus, other elements muted to gray
-    PRE_ATTENTIVE_COLORS = ["#D94E4E", "#888888", "#A6A6A6", "#C0C0C0"]
+    PRE_ATTENTIVE_COLORS = ["#D9A05B", "#888888", "#A6A6A6", "#C0C0C0"]
 
     bars = ax.barh(df["Shipping Mode"], df["Delay_Rate_In_Cancelled"], color=PRE_ATTENTIVE_COLORS, height=0.55)
 
@@ -488,13 +484,13 @@ def delay_rate_canceled_orders():
         label.set_fontsize(10)
         if i == 0:  # First Class
             label.set_fontweight("bold")
-            label.set_color("#D94E4E")
+            label.set_color("#124174")
 
     # Add targeted data labels
     for i, bar in enumerate(bars):
         width = bar.get_width()
         text_weight = "bold" if i == 0 else "normal"
-        text_color = "#D94E4E" if i == 0 else "#555555"
+        text_color = "#124174" if i == 0 else "#555555"
         text_size = 11 if i == 0 else 9
         
         ax.text(
@@ -599,6 +595,233 @@ def region_dependency_FC():
     # Add legend for corporate color scheme
     ax.legend(loc="lower right", frameon=False, fontsize=9)
 
+#Optimized
+@save_chart_automatically
+def Shipping_trend_optimized():
+
+    # 1. Fetch optimized shipping_trend df 
+    df_trend = Late_Perc_Period_Optimized()[0]
+
+    # 2. Initialize canvas
+    fig, ax = plt.subplots(figsize=(14, 6), dpi=100)
+    fig.patch.set_facecolor("#ffffff")
+    ax.set_facecolor("#ffffff")
+
+    # Disable grid lines
+    ax.grid(False)
+
+    # Color palette to distinguish shipping modes
+    PALETTE_TREND = {
+        "First Class": "#D9A05B",    
+        "Standard_Eco": "#124174", 
+        "Same Day": "#708090"     
+    }
+
+    # 3. Render trend lines using Seaborn
+    sns.lineplot(
+        x="year_month", 
+        y="Late_delivery_risk", 
+        hue="Shipping Mode", 
+        data=df_trend, 
+        ax=ax, 
+        palette=PALETTE_TREND,
+        linewidth=2.5,
+        marker="o",
+        markersize=5,
+    )
+
+    # 4. Title and Axis adjustments
+    COLOR_NAVY_DARK = "#1B365D"
+    ax.set_title("LATE DELIVERY RISK TREND BY SHIPPING MODE (OPTIMIZED) (2015 - 2018)", fontsize=12, fontweight="bold", color=COLOR_NAVY_DARK, pad=20)
+    ax.set_xlabel("Timeline (Year-Month)", fontsize=10, fontweight="bold", labelpad=12)
+    ax.set_ylabel("Late Delivery Risk Rate", fontsize=10, fontweight="bold")
+
+    # Format Y-axis tick labels as percentages
+    ax.get_yaxis().set_major_formatter(plt.FuncFormatter(lambda y, loc: f"{int(y*100)}%"))
+
+    # Thin out X-axis labels (display every 3 months) to prevent overlapping text
+    all_ticks = df_trend["year_month"].unique()
+    thinned_ticks = all_ticks[::3]
+    ax.set_xticks(thinned_ticks)
+    ax.set_xticklabels(thinned_ticks, rotation=35, ha="right", fontsize=9, color="#333333")
+
+    # 5. Position the legend outside the top-right corner for a clean layout
+    ax.legend(title="Shipping Mode", title_fontsize=10, fontsize=9, loc="upper left", bbox_to_anchor=(1, 1), frameon=False)
+
+    # 6. Spine clean-up
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_color("#cccccc")
+    ax.spines["bottom"].set_color("#cccccc")
+    ax.set_ylim(0, 1.05)
+@save_chart_automatically
+def Before_After_SLA():
+
+    # 1. DATA PREPARATION 
+    df_orig = pd.read_csv("data/processed/supply_chain_processed.csv")
+    df_opt = pd.read_csv("data/processed/optimized.csv")
+
+    # Calculate metrics for Original Dataset (Before)
+    df_orig["Delay_Days"] = np.where(
+        (val := (df_orig.actual_lead_time - df_orig.scheduled_lead_time)) < 0, 0, val
+    )
+    df_orig["is_late_calculated"] = np.where(
+        (df_orig["scheduled_lead_time"] - df_orig["actual_lead_time"]) >= 0, 0, 1
+    )
+
+    before_otd = (1 - df_orig["is_late_calculated"].mean())
+    before_late = df_orig["is_late_calculated"].mean()
+    before_delay = df_orig["Delay_Days"].mean()
+
+    # Calculate metrics for Optimized Dataset (After)
+    after_otd = (1 - df_opt["is_late"].mean())
+    after_late = df_opt["is_late"].mean()
+    after_delay = df_opt["Delay_Days"].mean()
+
+    # Restructure DataFrames
+    df_kpi_rates = pd.DataFrame(
+        {
+            "Status": ["Before", "After", "Before", "After"],
+            "Metric": [
+                "On-Time Delivery (OTD)",
+                "On-Time Delivery (OTD)",
+                "Late Delivery Rate",
+                "Late Delivery Rate",
+            ],
+            "Value": [before_otd, after_otd, before_late, after_late],
+        }
+    )
+
+    df_kpi_days = pd.DataFrame(
+        {
+            "Status": ["Before", "After"],
+            "Avg Delay Days": [before_delay, after_delay],
+        }
+    )
+
+# 2. CANVAS & INTERFACE INITIALIZATION
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6), dpi=100, gridspec_kw={"width_ratios": [2, 1]})
+    fig.patch.set_facecolor("#ffffff")
+
+    # Corporate Style Palette Configuration
+    COLOR_NAVY_DARK = "#1B365D"
+    PALETTE_BEFORE_AFTER = {
+        "Before": "#D9A05B",  
+        "After": "#124174"   
+    }
+
+    # --- SUBPLOT 1: GLOBAL OPERATIONAL RATES (%) ---
+    ax1 = axes[0]
+    ax1.set_facecolor("#ffffff")
+    ax1.grid(False)
+
+    sns.barplot(
+        data=df_kpi_rates,
+        x="Metric",
+        y="Value",
+        hue="Status",        
+        ax=ax1,
+        palette=PALETTE_BEFORE_AFTER,
+        legend=True,         
+        edgecolor="none"
+    )
+
+    ax1.set_title("OVERALL OPERATIONAL PERFORMANCE RECOVERY (%)", fontsize=12, fontweight="bold", color=COLOR_NAVY_DARK, pad=20)
+    ax1.set_ylabel("", visible=False)
+    ax1.set_xlabel("", visible=False)
+    ax1.get_xaxis().set_visible(True)
+    ax1.get_yaxis().set_visible(False)  # Hide Y axis lines entirely as we use data labels
+
+    # Style X-axis ticks
+    ax1.tick_params(axis="x", labelsize=10, colors="#333333")
+    for label in ax1.get_xticklabels():
+        label.set_weight("bold")
+
+    # Add Data Labels (%) right above the bar tips with subtle offsets
+    for p in ax1.patches:
+        height = p.get_height()
+        if height > 0:
+            ax1.text(
+                p.get_x() + p.get_width() / 2.0,
+                height + 0.02,  # Slight headroom offset
+                f"{height*100:.2f}%",
+                ha="center",
+                va="bottom",
+                fontsize=10,
+                fontweight="bold",
+                color=COLOR_NAVY_DARK
+            )
+
+    # Clean-up borders for Subplot 1
+    ax1.spines["top"].set_visible(False)
+    ax1.spines["right"].set_visible(False)
+    ax1.spines["bottom"].set_color("#cccccc")
+    ax1.spines["left"].set_visible(False)
+    ax1.set_ylim(0, 1.15)  # Add dynamic ceiling to avoid clipping labels
+
+    # Re-position legend inside Subplot 1 cleanly
+    ax1.legend(title="Status", title_fontsize=10, fontsize=9, loc="upper right", frameon=False)
+
+
+    # --- SUBPLOT 2: AVERAGE DELAY DAYS PER ORDER ---
+    ax2 = axes[1]
+    ax2.set_facecolor("#ffffff")
+    ax2.grid(False)
+
+    sns.barplot(
+        data=df_kpi_days,
+        x="Status",
+        y="Avg Delay Days",
+        hue="Status",         
+        ax=ax2,
+        palette=PALETTE_BEFORE_AFTER,
+        legend=False,         
+        edgecolor="none"
+    )
+
+    ax2.set_title("AVERAGE DELAY PER ORDER (DAYS)", fontsize=12, fontweight="bold", color=COLOR_NAVY_DARK, pad=20)
+    ax2.set_ylabel("", visible=False)
+    ax2.set_xlabel("", visible=False)
+    ax2.get_xaxis().set_visible(True)
+    ax2.get_yaxis().set_visible(False)
+
+    # Style X-axis ticks for Subplot 2
+    ax2.tick_params(axis="x", labelsize=10, colors="#333333")
+    for label in ax2.get_xticklabels():
+        label.set_weight("bold")
+
+    # Add Data Labels (Days) right above the bar tips
+    for p in ax2.patches:
+        height = p.get_height()
+        if height > 0:  
+            ax2.text(
+                p.get_x() + p.get_width() / 2.0,
+                height + max(df_kpi_days["Avg Delay Days"]) * 0.02,
+                f"{height:.2f} days",
+                ha="center",
+                va="bottom",
+                fontsize=10,
+                fontweight="bold",
+                color=COLOR_NAVY_DARK
+            )
+
+    # Clean-up borders for Subplot 2
+    ax2.spines["top"].set_visible(False)
+    ax2.spines["right"].set_visible(False)
+    ax2.spines["bottom"].set_color("#cccccc")
+    ax2.spines["left"].set_visible(False)
+    ax2.set_ylim(0, max(df_kpi_days["Avg Delay Days"]) * 1.15)
+
+
+    # --- GLOBAL FIGURE PLOTTING ---
+    plt.suptitle(
+        "SUPPLY CHAIN PERFORMANCE EVALUATION REPORT (BEFORE VS. AFTER OPTIMIZATION)",
+        fontsize=14,
+        weight="bold",
+        color=COLOR_NAVY_DARK,
+        y=1.02,
+    )
+    
 #======================================================
 if __name__ == "__main__":
     shipping_performance_chart()
@@ -610,3 +833,5 @@ if __name__ == "__main__":
     delay_rate_canceled_orders()
     category_dependency_FC()
     region_dependency_FC()
+    Shipping_trend_optimized()
+    Before_After_SLA()

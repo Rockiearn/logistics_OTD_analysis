@@ -18,7 +18,7 @@ def get_dataset():
     return df_optimized
 
 # Overall KPI Optimized
-def get_KPI():
+def get_KPI_Optimized():
     Late_Rate_Perc = df_optimized.is_late.mean()
     Overall_OTD = 1 - Late_Rate_Perc
     AVG_Ac_lead_time = df_optimized.actual_lead_time.mean()
@@ -46,7 +46,7 @@ def get_KPI():
     return KPI
 
 # Total orders of each Optimized Shipping mode
-def Order_Info():
+def Order_Info_Optimized():
     T_orders = (
         df_optimized.groupby("Shipping Mode")
         .agg(
@@ -67,7 +67,7 @@ def Order_Info():
 
 
 # Late_Perc_Group Optimized
-def Late_Perc_Group():
+def Late_Perc_Group_Optimized():
     Shipping_mode = (
         pd.merge(
             df_optimized.groupby("Shipping Mode")["is_late"]
@@ -109,11 +109,11 @@ def Late_Perc_Group():
 
 
 # Late_Period Optimized
-def Late_Perc_Period():
+def Late_Perc_Period_Optimized():
     trend_df = (
         df_optimized.groupby(["year_month", "Shipping Mode"])["is_late"]
         .mean()
-        .reset_index()
+        .reset_index(name="Late_delivery_risk")
     )
     Late_Perc_Qrt = (
         df_optimized.groupby("Quarter_order")["is_late"]
@@ -131,10 +131,10 @@ def Late_Perc_Period():
 
 
 if __name__ == "__main__":
-    trend_df, df_qrt, df_wd = Late_Perc_Period()
-    shipping_mode, category, market, cus_segment = Late_Perc_Group()
-    kpi = get_KPI()
-    order_info = Order_Info()
+    trend_df, df_qrt, df_wd = Late_Perc_Period_Optimized()
+    shipping_mode, category, market, cus_segment = Late_Perc_Group_Optimized()
+    kpi = get_KPI_Optimized()
+    order_info = Order_Info_Optimized()
 
     
     print("--- [OPTIMIZED] Order Insight ---")
