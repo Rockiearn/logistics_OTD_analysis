@@ -2,13 +2,26 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import sys
 from dotenv import load_dotenv, find_dotenv  
 
-from src.eda import get_KPI, Order_Info
-from src.analysis import get_dashboard_kpi, get_cancellation_analysis
-from src.apply_recommendations import get_KPI_Optimized
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC_DIR = os.path.join(ROOT_DIR, "src")
+
+if SRC_DIR not in sys.path:
+    sys.path.append(SRC_DIR)
+
+# Directory path to the visual assets
+VISUAL_BOX_DIR = os.path.join(ROOT_DIR, "visual_box")
+
+from eda import get_KPI, Order_Info
+from analysis import get_dashboard_kpi, get_cancellation_analysis
+from apply_recommendations import get_KPI_Optimized
 
 load_dotenv(find_dotenv())
+
+
 # ==========================================
 # CONFIG & THEME CONFIGURATION
 # ==========================================
@@ -19,8 +32,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Directory path to the visual assets
-VISUAL_BOX_DIR = "visual_box"
 
 # ==========================================
 # SIDEBAR - GLOBAL FILTERS OR PROJECT INFO
